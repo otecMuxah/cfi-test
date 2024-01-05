@@ -1,7 +1,8 @@
-import { AsyncPipe, NgFor, NgIf } from '@angular/common';
-import { Component, Input, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { FakeServiceService } from './fake.service';
+import {AsyncPipe, NgFor, NgIf} from '@angular/common';
+import { Component, inject, Input} from '@angular/core';
+import {RouterLink, RouterLinkActive} from '@angular/router';
+import {FakeServiceService} from './fake.service';
+import {map} from "rxjs";
 
 interface MenuItem {
   path: string;
@@ -41,14 +42,15 @@ export class NavigationComponent {
   standalone: true,
   imports: [NavigationComponent, NgIf, AsyncPipe],
   template: `
+    <!--    Just not to use functions in template. It's not a good practice. It was so near :)-->
     <ng-container *ngIf="info$ | async as info">
       <ng-container *ngIf="info !== null; else noInfo">
-        <app-nav [menus]="getMenu(info)" />
+        <app-nav [menus]="info" />
       </ng-container>
     </ng-container>
 
     <ng-template #noInfo>
-      <app-nav [menus]="getMenu('')" />
+      <app-nav [menus]="[]" />
     </ng-template>
   `,
   host: {},
@@ -56,7 +58,9 @@ export class NavigationComponent {
 export class MainNavigationComponent {
   private fakeBackend = inject(FakeServiceService);
 
-  readonly info$ = this.fakeBackend.getInfoFromBackend();
+  readonly info$ = this.fakeBackend.getInfoFromBackend().pipe(map((val: string) => {
+    return this.getMenu(val);
+  }));
 
   getMenu(prop: string) {
     return [
